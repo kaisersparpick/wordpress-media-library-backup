@@ -8,18 +8,19 @@ function description() {
 
 function download($file_name, $dest_basedir) {
     $xml = file_get_contents($file_name);
-    preg_match_all('/<wp:attachment_url>(.+)<\/wp:attachment_url>/', $xml, $urls);
+    preg_match_all('/<wp:attachment_url>(?:<!\[CDATA\[)*(.*?)(?:\]\]>)*<\/wp:attachment_url>/', $xml, $urls);
     out(date('Y-m-d H:i:s') . ' - Download started');
 
     foreach($urls[1] as $u) {
         out('CHCK', 'cyan', false);
+        $u = str_replace(['%3A', '%2F'], [':', '/'], rawurlencode($u));
         echo " > $u";
 
         $dest_dir = $dest_basedir . str_replace(basename($u), '', parse_url($u)['path']);
         if (!is_dir($dest_dir)) mkdir($dest_dir, 0777, true);
         $dest_file = $dest_dir . DIRECTORY_SEPARATOR . basename($u);
 
-        $remote_mod = strtotime(get_headers($u, 1)['Last-Modified']);
+        $remote_mod = strtotime(get_headers($u, 1)['Last-Modified'] ?? '2099-12-31');
         $local_mod = is_file($dest_file) ? filemtime($dest_file) : 0;
 
         if ($remote_mod > $local_mod) {

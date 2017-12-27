@@ -5,13 +5,13 @@ import re
 import sys
 import time
 import urllib.request
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 
 def get_urls_from_xml(xml_file):
     with open(xml_file, encoding="utf8") as f:
         xml = f.read()
-        regex = re.compile("<wp:attachment_url>(.+)<\/wp:attachment_url>", re.MULTILINE)
+        regex = re.compile("<wp:attachment_url>(?:<!\[CDATA\[)*(.*?)(?:\]\]>)*<\/wp:attachment_url>", re.MULTILINE)
         matches = regex.findall(xml)
 
         return matches
@@ -33,6 +33,8 @@ def backup(xml_file, destination, overwrite):
     print("Downloading...")
 
     for url in urls:
+        url = quote(url)
+        url = url.replace('%3A', ':')
         filename, dirs = get_filename_and_path_from_url(url)
         full_path = os.path.join(curr_dir, destination, dirs)
 
